@@ -1,18 +1,26 @@
 const express = require('express');
 const morgan = require('morgan');
+const helmet = require('helmet');
+const cors = require('cors');
 const { body, validationResult } = require('express-validator');
 
 const app = express();
 
-app.use(morgan('dev'));
-app.use(express.json()); // Fixed the "espress" typo
-app.use(express.static("public"));
+
+app.use(helmet()); 
+app.use(cors()); 
+app.use(morgan('dev')); 
+app.use(express.json()); 
+app.use(express.static("public")); 
+
+
 
 let books = [
     { "id": 1, "title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "publishedYear": 1925, "isRead": true },
     { "id": 2, "title": "1984", "author": "George Orwell", "publishedYear": 1949, "isRead": false },
     { "id": 3, "title": "The Hobbit", "author": "J.R.R. Tolkien", "publishedYear": 1937, "isRead": true }
 ];
+
 
 function validateYear(req, res, next) {
     const currentYear = new Date().getFullYear();
@@ -37,7 +45,6 @@ app.get("/books", (req, res) => {
     res.json(books);
 });
 
-
 app.get("/books/:title", (req, res) => {
     const title = req.params.title;
     const book = books.find(b => b.title.toLowerCase() === title.toLowerCase());
@@ -48,7 +55,6 @@ app.get("/books/:title", (req, res) => {
         res.status(404).json({ message: "Book not found" });
     }
 });
-
 
 app.post("/books", 
     [
@@ -65,7 +71,6 @@ app.post("/books",
 
         const { title, author, publishedYear, isRead } = req.body;
 
-        
         const newId = books.length > 0 ? Math.max(...books.map(b => b.id)) + 1 : 1;
 
         const newBook = {
@@ -80,7 +85,6 @@ app.post("/books",
         res.status(201).json({ message: "Book added to shelf!", book: newBook });
 });
 
-
 app.put("/books/:id", (req, res) => {
     const id = parseInt(req.params.id);
     const { isRead, title, author, publishedYear } = req.body;
@@ -88,7 +92,7 @@ app.put("/books/:id", (req, res) => {
     const bookIndex = books.findIndex(b => b.id === id);
 
     if (bookIndex !== -1) {
-        
+    
         books[bookIndex] = { 
             ...books[bookIndex], 
             title: title || books[bookIndex].title,
@@ -101,7 +105,6 @@ app.put("/books/:id", (req, res) => {
         res.status(404).json({ message: "Book ID not found" });
     }
 });
-
 
 app.delete("/books/:id", (req, res) => {
     const id = parseInt(req.params.id);
@@ -118,10 +121,15 @@ app.delete("/books/:id", (req, res) => {
 
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: "Something went wrong on our end!" });
 });
 
-const PORT = 3000;
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Bookshelf API running on http://localhost:${PORT}`);
+    console.log(`
+    🚀 Bookshelf API running!
+    Link: http://localhost:${PORT}/books
+    Static files: http://localhost:${PORT}/
+    `);
 });
